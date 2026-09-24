@@ -10,12 +10,14 @@ const ComplaintSchema = new Schema(
     isPickUp: { type: Boolean, default: false },
     pickUpDate: { type: String, default: "" },
     isApproval: { type: Boolean, default: true },
-    amount: { type: String, default: "0" },
+    approvalAmount: { type: String, default: "0" },
+    proceedAmount: { type: String, default: "0" },
+    amount: { type: String, default: "0" }, // backward compatibility
     status: { type: String, default: "Pending" }, // Pending, Under Repair, Not Ready, Ready
     reason: { type: String, default: "" },
     readyForDelivery: { type: Boolean, default: false },
     deliveryReadyDate: { type: String, default: "" },
-    city: { type: String, default: "Vapi" }, // Vapi, Surat, Ahmedabad, CH
+    city: { type: String, default: "Vapi" }, // Vapi, Surat, Valsad, Umargam, Ahmedabad, CH
     deliveryStatus: { type: String, default: "Pending" }, // Close, Unsold, BER, Reject
     workshopStatus: { type: String, default: "None" }, // In, Out, None
     workshopInDate: { type: String, default: "" },

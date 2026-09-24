@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Trash2, Edit3, Plus, Bell, Tv, CheckCircle2, Clock, Wrench, ShieldCheck, Search, Download, AlertTriangle } from "lucide-react";
+import { Trash2, Edit3, Plus, Tv, Search, Download, AlertTriangle, Clock } from "lucide-react";
 
 export default function KrutiInsuranceApp() {
   const [items, setItems] = useState<any[]>([]);
@@ -21,6 +21,8 @@ export default function KrutiInsuranceApp() {
     isPickUp: false,
     pickUpDate: "",
     isApproval: true,
+    approvalAmount: "0",
+    proceedAmount: "0",
     amount: "0",
     status: "Pending",
     reason: "",
@@ -103,7 +105,11 @@ export default function KrutiInsuranceApp() {
   // Edit mode on karna
   const startEdit = (item: any) => {
     setEditingItem(item);
-    setFormData(item);
+    setFormData({
+      ...item,
+      approvalAmount: item.approvalAmount || item.amount || "0",
+      proceedAmount: item.proceedAmount || "0",
+    });
     setActiveTab("add");
   };
 
@@ -111,7 +117,7 @@ export default function KrutiInsuranceApp() {
   const syncGoogleCalendar = (item: any) => {
     const title = encodeURIComponent(`TV Repair Visit: ${item.customerName} (#${item.srNo})`);
     const details = encodeURIComponent(
-      `Issue: ${item.complaintDesc}\nTechnician: ${item.technicianName}\nNotes: ${item.notes}\nStatus: ${item.status}`
+      `Issue: ${item.complaintDesc}\nTechnician: ${item.technicianName}\nNotes: ${item.notes}\nStatus: ${item.status}\nApproval Amt: ₹${item.approvalAmount || item.amount || 0}\nProceed Amt: ₹${item.proceedAmount || 0}`
     );
     const location = encodeURIComponent(`${item.city} - Customer House`);
     const dateFormatted = item.customerVisitDate ? item.customerVisitDate.replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
@@ -123,7 +129,6 @@ export default function KrutiInsuranceApp() {
   const getDaysCount = (item: any) => {
     const createdDate = item.createdAt ? new Date(item.createdAt) : (item.customerVisitDate ? new Date(item.customerVisitDate) : new Date());
     const now = new Date();
-    // Reset hours to calculate exact calendar days
     const d1 = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
     const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const diffTime = d2.getTime() - d1.getTime();
@@ -134,7 +139,7 @@ export default function KrutiInsuranceApp() {
   // Check agar 3 din ya usse zyada pending hai (Highlight ke liye)
   const isOverdue3Days = (item: any) => {
     if (item.status === "Ready" || item.deliveryStatus === "Close") {
-      return false; // Delivered wale ko alert nahi karenge
+      return false;
     }
     return getDaysCount(item) >= 3;
   };
@@ -156,7 +161,8 @@ export default function KrutiInsuranceApp() {
       "Days Passed",
       "Priority",
       "Status",
-      "Amount",
+      "Approval Amount",
+      "Proceed Amount",
       "Visit Date",
       "Pick Up",
       "Pick Up Date",
@@ -180,7 +186,8 @@ export default function KrutiInsuranceApp() {
       `"${getDaysCount(i)} days"`,
       `"${i.priority || ""}"`,
       `"${i.status || ""}"`,
-      `"${i.amount || "0"}"`,
+      `"${i.approvalAmount || i.amount || "0"}"`,
+      `"${i.proceedAmount || "0"}"`,
       `"${i.customerVisitDate || ""}"`,
       `"${i.isPickUp ? "Yes" : "No"}"`,
       `"${i.pickUpDate || ""}"`,
@@ -198,7 +205,7 @@ export default function KrutiInsuranceApp() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Kruti_Insurance_Receipts_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `Kruti_Receipts_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -227,15 +234,14 @@ export default function KrutiInsuranceApp() {
 
   return (
     <div className="min-h-screen bg-[#F7F7FA] text-slate-800 font-sans pb-12">
-      {/* 1. Header (Brand Red Navbar - NO LOGOUT BUTTON) */}
+      {/* 1. Header (Brand Red Navbar with "kruti electronics-MI") */}
       <header className="bg-[#D32F2F] text-white px-6 py-3 shadow-md flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
             <Tv className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg tracking-wide leading-tight">Kruti Insurance & Electronics</h1>
-            <p className="text-xs text-white/80 font-medium">Service Desk & Workflow Manager</p>
+            <h1 className="font-bold text-xl tracking-wide leading-tight">kruti electronics-MI</h1>
           </div>
         </div>
 
@@ -306,7 +312,7 @@ export default function KrutiInsuranceApp() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-extrabold text-slate-900">Dashboard</h2>
-                <p className="text-xs text-slate-500">Live summary of all insurance claims and repairs</p>
+                <p className="text-xs text-slate-500">Live summary of all service claims and repairs</p>
               </div>
               <button
                 onClick={() => { setActiveTab("add"); setEditingItem(null); setFormData(initialForm); }}
@@ -316,7 +322,7 @@ export default function KrutiInsuranceApp() {
               </button>
             </div>
 
-            {/* 4 Cards matching photo + Overdue Card */}
+            {/* 4 Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-[#1E88E5] text-white p-5 rounded-xl shadow">
                 <span className="text-xs font-semibold uppercase tracking-wider text-blue-100">Total Receipts</span>
@@ -423,7 +429,7 @@ export default function KrutiInsuranceApp() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">City *</label>
+                  <label className="text-xs font-semibold text-slate-700">City (Valsad & Umargam Included) *</label>
                   <select
                     className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none"
                     value={formData.city}
@@ -431,6 +437,8 @@ export default function KrutiInsuranceApp() {
                   >
                     <option value="Vapi">Vapi</option>
                     <option value="Surat">Surat</option>
+                    <option value="Valsad">Valsad</option>
+                    <option value="Umargam">Umargam</option>
                     <option value="Ahmedabad">Ahmedabad</option>
                     <option value="CH">CH (Customer House)</option>
                   </select>
@@ -554,9 +562,9 @@ export default function KrutiInsuranceApp() {
               </div>
             </div>
 
-            {/* Section 4: Workshop & Delivery Status */}
+            {/* Section 4: Workshop & Delivery Status & SPLIT AMOUNTS */}
             <div className="border-t pt-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#D32F2F] mb-3">4. Workshop, Status & Financials</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#D32F2F] mb-3">4. Workshop, Status & Financials (Split Amounts)</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Repair Status</label>
@@ -611,20 +619,30 @@ export default function KrutiInsuranceApp() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+              {/* SPLIT AMOUNTS: APPROVAL AMOUNT & PROCEED AMOUNT */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3 bg-amber-50/60 p-3.5 rounded-lg border border-amber-200">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Amount (₹)</label>
+                  <label className="text-xs font-bold text-amber-900">Approval Amount (₹)</label>
+                  <input
+                    placeholder="e.g. 2000"
+                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none mt-1 bg-white font-semibold"
+                    value={formData.approvalAmount}
+                    onChange={(e) => setFormData({ ...formData, approvalAmount: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-emerald-900">Proceed Amount (₹)</label>
                   <input
                     placeholder="e.g. 1500"
-                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none mt-1 bg-white font-semibold"
+                    value={formData.proceedAmount}
+                    onChange={(e) => setFormData({ ...formData, proceedAmount: e.target.value })}
                   />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Delivery Status</label>
                   <select
-                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none"
+                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none mt-1 bg-white"
                     value={formData.deliveryStatus}
                     onChange={(e) => setFormData({ ...formData, deliveryStatus: e.target.value })}
                   >
@@ -639,7 +657,7 @@ export default function KrutiInsuranceApp() {
                   <label className="text-xs font-semibold text-slate-700">Reason / Diagnosis</label>
                   <input
                     placeholder="e.g. Power supply board replaced"
-                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none"
+                    className="w-full border border-slate-300 rounded-md p-2 text-sm focus:border-red-500 outline-none mt-1 bg-white"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                   />
@@ -740,12 +758,14 @@ export default function KrutiInsuranceApp() {
                 <option value="All">All Cities</option>
                 <option value="Vapi">Vapi</option>
                 <option value="Surat">Surat</option>
+                <option value="Valsad">Valsad</option>
+                <option value="Umargam">Umargam</option>
                 <option value="Ahmedabad">Ahmedabad</option>
                 <option value="CH">CH</option>
               </select>
             </div>
 
-            {/* Table with DAYS PASSED COLUMN & RED HIGHLIGHT FOR >= 3 DAYS */}
+            {/* Table with DAYS PASSED, APPROVAL AMT, PROCEED AMT */}
             <div className="bg-white rounded-xl shadow border border-slate-200 overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-slate-100 text-slate-700 uppercase font-bold border-b">
@@ -754,11 +774,13 @@ export default function KrutiInsuranceApp() {
                     <th className="p-3">Sr No</th>
                     <th className="p-3">Customer Name</th>
                     <th className="p-3">Mobile</th>
+                    <th className="p-3">City</th>
                     <th className="p-3">TV Brand</th>
                     <th className="p-3 text-center">Days Passed</th>
                     <th className="p-3">Priority</th>
                     <th className="p-3">Status</th>
-                    <th className="p-3">Amount</th>
+                    <th className="p-3">Approval Amt</th>
+                    <th className="p-3">Proceed Amt</th>
                     <th className="p-3">Remarks / Notes</th>
                     <th className="p-3 text-right">Actions</th>
                   </tr>
@@ -766,13 +788,13 @@ export default function KrutiInsuranceApp() {
                 <tbody className="divide-y divide-slate-100">
                   {loading ? (
                     <tr>
-                      <td colSpan={11} className="p-8 text-center text-slate-400 font-semibold">
+                      <td colSpan={13} className="p-8 text-center text-slate-400 font-semibold">
                         Loading complaints from MongoDB Atlas...
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="p-8 text-center text-slate-400 font-semibold">
+                      <td colSpan={13} className="p-8 text-center text-slate-400 font-semibold">
                         No receipts found. Click "+ Add Receipt" to create one.
                       </td>
                     </tr>
@@ -804,6 +826,7 @@ export default function KrutiInsuranceApp() {
                           </td>
                           <td className="p-3 font-semibold text-slate-900">{item.customerName}</td>
                           <td className="p-3 text-slate-700">{item.customerMobile}</td>
+                          <td className="p-3 font-medium text-slate-800">{item.city || "Vapi"}</td>
                           <td className="p-3">{item.brand || "TV"} {item.modelNo}</td>
                           
                           {/* KITNE DIN HUE COLUMN */}
@@ -852,10 +875,18 @@ export default function KrutiInsuranceApp() {
                               {item.status}
                             </span>
                           </td>
-                          <td className="p-3 font-bold">₹{item.amount || "0"}</td>
+
+                          {/* SPLIT AMOUNTS: APPROVAL & PROCEED */}
+                          <td className="p-3 font-bold text-amber-900">
+                            ₹{item.approvalAmount || item.amount || "0"}
+                          </td>
+                          <td className="p-3 font-bold text-emerald-800">
+                            ₹{item.proceedAmount || "0"}
+                          </td>
+
                           <td className="p-3 text-slate-700 max-w-xs truncate">{item.notes || item.reason || "-"}</td>
                           
-                          {/* STRICTLY ACTIONS: CALENDAR, UPDATE, DELETE */}
+                          {/* ACTIONS */}
                           <td className="p-3 text-right space-x-1.5 whitespace-nowrap">
                             <button
                               onClick={() => syncGoogleCalendar(item)}
